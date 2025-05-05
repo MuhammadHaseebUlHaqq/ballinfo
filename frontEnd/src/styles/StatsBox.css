@@ -1,0 +1,140 @@
+.stats-box {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  padding: 16px;
+}
+
+.stat-carousel {
+  margin-top: 16px;
+}
+
+.stat-card {
+  position: relative;
+  padding: 20px;
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--stat-color, var(--primary-color));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: var(--transition);
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+  display: inline-block;
+}
+
+.stat-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.stat-value-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.stat-value {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--stat-color, var(--primary-color));
+}
+
+.stat-unit {
+  font-size: 1rem;
+  color: var(--light-text);
+  margin-bottom: 6px;
+}
+
+.stat-description {
+  font-size: 0.875rem;
+  color: var(--light-text);
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.stat-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--stat-color, var(--primary-color));
+  transition: var(--transition);
+}
+
+.stat-link:hover {
+  text-decoration: underline;
+}
+
+.stat-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.stat-control {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-color);
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.stat-control:hover {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.stat-indicators {
+  display: flex;
+  gap: 6px;
+}
+
+.stat-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background-color: #e1e1e1;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.stat-indicator.active {
+  background-color: var(--primary-color);
+  transform: scale(1.25);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .stat-value {
+    font-size: 2.5rem;
+  }
+} 

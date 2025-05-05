@@ -1,0 +1,123 @@
+.on-this-day {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  padding: 16px;
+}
+
+.history-card {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary-color);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.calendar-icon {
+  font-size: 1rem;
+}
+
+.history-content {
+  padding: 0;
+}
+
+.history-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.history-description {
+  font-size: 0.875rem;
+  color: var(--light-text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.history-media {
+  margin: 8px 0;
+}
+
+.history-thumbnail {
+  position: relative;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+}
+
+.history-thumbnail img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.history-thumbnail:hover img {
+  transform: scale(1.05);
+}
+
+.play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.play-button:hover {
+  background-color: var(--primary-color);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.history-link {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--primary-color);
+  transition: var(--transition);
+}
+
+.history-link:hover {
+  color: var(--secondary-color);
+}
+
+.link-icon {
+  font-size: 0.75rem;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .history-thumbnail img {
+    height: 180px;
+  }
+  
+  .play-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+} 
