@@ -6,48 +6,80 @@ import connectDB from "./db.js";
 import dotenv from "dotenv";
 import socketService from './services/socketService.js';
 import playerStatsRouter from './routes/playerStats.js';
+import authRouter from './routes/auth.js';
+import matchesRouter from './routes/matches.js';
+import mongoose from 'mongoose';
 
 dotenv.config();
 
-const port = process.env.PORT || 3000;
-
 const app = express();
-const httpServer = createServer(app);
+const server = createServer(app);
 
-// Initialize socket service
-socketService.initialize(httpServer);
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    console.log('Headers:', req.headers);
+    next();
+});
 
-// Middleware
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+    origin: ['http://localhost:3001'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token', 'Accept'],
+    credentials: true
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Body parser middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Connect to MongoDB
 connectDB();
 
-// Routes
-app.get("/", (req, res) => {
-    res.json({ message: "Welcome to BallInfo API" });
+// Initialize socket service with CORS options
+socketService.initialize(server, corsOptions);
+
+// Test endpoint
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    });
 });
 
-// Player Stats routes
+// Mount routes
+app.use('/api/matches', matchesRouter);
 app.use('/api/player-stats', playerStatsRouter);
+app.use('/api/auth', authRouter);
 
-app.post("/login", (req, res) => {
-    // Login implementation
+// Handle 404 errors
+app.use((req, res, next) => {
+    res.status(404).json({
+        status: 'error',
+        message: `Cannot ${req.method} ${req.url}`
+    });
 });
 
-app.post("/signup", (req, res) => {
-    // Signup implementation
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(err.status || 500).json({
+        status: 'error',
+        message: err.message || 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? err : {}
+    });
 });
 
-app.get("/matchInfo", (req, res) => {
-    // Match info implementation
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Server URL: http://localhost:${PORT}`);
 });
 
-// Start the server
-httpServer.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-    console.log(`WebSocket server is ready for connections`);
-});
 

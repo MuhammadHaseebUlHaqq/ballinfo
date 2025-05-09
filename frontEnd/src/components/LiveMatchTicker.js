@@ -30,15 +30,26 @@ const LiveMatchTicker = () => {
         };
     }, []);
 
-    const formatMatchDate = (utcDate) => {
+    const formatMatchDateTime = (utcDate, minute) => {
         const date = new Date(utcDate);
-        return new Intl.DateTimeFormat('en-GB', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        }).format(date);
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        let dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        let timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        if (minute) {
+            return { date: 'LIVE', time: `${minute}'` };
+        }
+        if (date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()) {
+            return { date: 'Today', time: timeStr };
+        }
+        if (date.getDate() === tomorrow.getDate() && date.getMonth() === tomorrow.getMonth() && date.getFullYear() === tomorrow.getFullYear()) {
+            return { date: 'Tomorrow', time: timeStr };
+        }
+        return { date: dateStr, time: timeStr };
     };
 
     const scroll = (direction) => {
@@ -54,19 +65,14 @@ const LiveMatchTicker = () => {
     const renderMatchCard = (match) => {
         const isUpcoming = match.isUpcoming;
         const isLive = !isUpcoming && match.minute;
-        
+        const dateTime = formatMatchDateTime(match.utcDate, match.minute);
         return (
-            <div key={match.id} className={`match-card ${isUpcoming ? 'upcoming' : ''} ${isLive ? 'live' : ''}`}>
+            <div key={match.id} className={`match-card ${isUpcoming ? 'upcoming' : ''} ${isLive ? 'live' : ''} ${!isUpcoming && !isLive ? 'ft' : ''}`}>
                 <div className="match-header">
                     <div className="match-info">
                         <span className="competition">{match.competition}</span>
                         {isLive && <span className="live-badge">LIVE</span>}
                     </div>
-                    {isUpcoming ? (
-                        <span className="scheduled-time">{formatMatchDate(match.utcDate)}</span>
-                    ) : (
-                        match.minute && <span className="minute">{match.minute}'</span>
-                    )}
                 </div>
                 <div className="match-teams">
                     <div className="team home">
@@ -74,15 +80,21 @@ const LiveMatchTicker = () => {
                         <span className="team-name">{match.homeTeam.name}</span>
                     </div>
                     <div className="match-score">
-                        {isUpcoming ? (
-                            <span className="vs">VS</span>
-                        ) : (
-                            <>
-                                <span className="score">{match.homeTeam.score}</span>
-                                <span className="score-separator">-</span>
-                                <span className="score">{match.awayTeam.score}</span>
-                            </>
-                        )}
+                        <div style={{display: 'flex', alignItems: 'center', gap: 4}}>
+                            {isUpcoming ? (
+                                <span className="vs">VS</span>
+                            ) : (
+                                <>
+                                    <span className="score">{match.homeTeam.score}</span>
+                                    <span className="score-separator">-</span>
+                                    <span className="score">{match.awayTeam.score}</span>
+                                </>
+                            )}
+                        </div>
+                        <div className="match-date-time">
+                            <span className="match-date">{dateTime.date}</span>
+                            <span className="match-time">{dateTime.time}</span>
+                        </div>
                     </div>
                     <div className="team away">
                         <img src={match.awayTeam.crest} alt={match.awayTeam.name} className="team-crest" />

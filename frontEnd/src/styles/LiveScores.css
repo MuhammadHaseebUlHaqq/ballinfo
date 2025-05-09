@@ -1,0 +1,268 @@
+.live-scores-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.matches-section {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  color: white;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.last-updated {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.matches-grid {
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.match-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.match-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.match-card.live {
+  border: 2px solid #2196f3;
+}
+
+.match-header {
+  padding: 12px 16px;
+  background: #f1f3f4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.competition-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.competition-name {
+  font-weight: 600;
+  color: #1a237e;
+}
+
+.match-date {
+  font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-badge {
+  background: #f44336;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+.match-content {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.team.away {
+  flex-direction: column;
+}
+
+.team-logo-container {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-logo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.team-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.score-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.score {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a237e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-divider {
+  opacity: 0.5;
+}
+
+.match-time {
+  font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.loading-container {
+  padding: 48px;
+  text-align: center;
+  color: #666;
+}
+
+.loading-container p {
+  margin-top: 16px;
+}
+
+.error-container {
+  padding: 32px;
+  text-align: center;
+  color: #d32f2f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.error-icon {
+  font-size: 2rem;
+}
+
+.error-message {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.retry-button {
+  background: #2196f3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.retry-button:hover {
+  background: #1976d2;
+}
+
+.no-matches-message {
+  padding: 32px;
+  text-align: center;
+  color: #666;
+  font-size: 1rem;
+}
+
+.icon {
+  opacity: 0.8;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .live-scores-container {
+    padding: 12px;
+  }
+
+  .matches-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .match-content {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .team-logo-container {
+    width: 40px;
+    height: 40px;
+  }
+
+  .score {
+    font-size: 1.2rem;
+  }
+}
+
+/* Status-specific styles */
+.match-card.finished {
+  background: #e3eaf6;
+  border-color: #c5cae9;
+}
+
+.match-card.upcoming {
+  background: #e3e6ea;
+  border-color: #cfd8dc;
+} 

@@ -6,93 +6,239 @@ dotenv.config();
 class FootballApiService {
     constructor() {
         this.apiKey = process.env.FOOTBALL_API_KEY;
-        this.baseUrl = 'http://api.football-data.org/v4';
+        if (!this.apiKey) {
+            console.error('FOOTBALL_API_KEY is not set in environment variables');
+        }
+        this.baseUrl = 'https://api.football-data.org/v4';
         this.axiosInstance = axios.create({
             baseURL: this.baseUrl,
             headers: {
                 'X-Auth-Token': this.apiKey
             }
         });
+        // Add minimal caching
+        this.cachedMatches = null;
+        this.cacheTime = 0;
+        this.cacheValidityPeriod = 30000; // 30 seconds
     }
 
     async getLiveMatches() {
         try {
-            const response = await this.axiosInstance.get('/matches', {
-                params: {
-                    status: 'LIVE',
-                    competitions: 'PD' // La Liga competition code
-                }
-            });
-
-            const liveMatches = this.formatMatchData(response.data.matches);
+            console.log('Fetching La Liga matches...');
             
-            // If there are no live matches or few live matches, get upcoming matches
-            if (liveMatches.length < 3) {
-                const upcomingMatches = await this.getUpcomingMatches(3 - liveMatches.length);
-                return [...liveMatches, ...upcomingMatches];
+            if (!this.apiKey) {
+                throw new Error('API key is not configured');
             }
 
-            return liveMatches;
-        } catch (error) {
-            console.error('Error fetching live matches:', error);
-            throw error;
-        }
-    }
+            if (this.cachedMatches && Date.now() - this.cacheTime < this.cacheValidityPeriod) {
+                console.log('Returning cached match data');
+                return this.cachedMatches;
+            }
 
-    async getUpcomingMatches(limit = 3) {
-        try {
+            // Calculate date range
             const today = new Date();
             const nextWeek = new Date(today);
             nextWeek.setDate(today.getDate() + 7);
 
+            // Format dates for API
+            const dateFrom = today.toISOString().split('T')[0];
+            const dateTo = nextWeek.toISOString().split('T')[0];
+
+            console.log('Fetching matches with date range:', { dateFrom, dateTo });
+
+            // Single API call with combined filters
             const response = await this.axiosInstance.get('/matches', {
                 params: {
-                    status: 'SCHEDULED',
                     competitions: 'PD',
-                    dateFrom: today.toISOString().split('T')[0],
-                    dateTo: nextWeek.toISOString().split('T')[0],
-                    limit: limit
+                    dateFrom: dateFrom,
+                    dateTo: dateTo
                 }
             });
 
-            return this.formatMatchData(response.data.matches, true);
+            console.log('API Response:', {
+                status: response.status,
+                matchCount: response.data?.matches?.length || 0
+            });
+
+            if (!response.data?.matches) {
+                console.log('No matches data in response');
+                return [];
+            }
+
+            const matches = response.data.matches;
+            const processedMatches = matches.map(match => {
+                const matchDate = new Date(match.utcDate);
+                const isLive = ['LIVE', 'IN_PLAY', 'PAUSED'].includes(match.status);
+                
+                return {
+                    id: match.id,
+                    competition: 'La Liga',
+                    homeTeam: {
+                        name: match.homeTeam?.name || '',
+                        score: isLive ? (match.score?.fullTime?.home || 0) : null,
+                        crest: match.homeTeam?.crest || ''
+                    },
+                    awayTeam: {
+                        name: match.awayTeam?.name || '',
+                        score: isLive ? (match.score?.fullTime?.away || 0) : null,
+                        crest: match.awayTeam?.crest || ''
+                    },
+                    status: match.status,
+                    minute: isLive ? (match.minute || null) : null,
+                    venue: match.venue || '',
+                    formattedDate: matchDate.toLocaleDateString('en-GB', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                    }),
+                    formattedTime: matchDate.toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }),
+                    utcDate: match.utcDate,
+                    isUpcoming: match.status === 'SCHEDULED'
+                };
+            });
+
+            // Sort matches: LIVE first, then by date
+            processedMatches.sort((a, b) => {
+                if (['LIVE', 'IN_PLAY', 'PAUSED'].includes(a.status) && !['LIVE', 'IN_PLAY', 'PAUSED'].includes(b.status)) return -1;
+                if (!['LIVE', 'IN_PLAY', 'PAUSED'].includes(a.status) && ['LIVE', 'IN_PLAY', 'PAUSED'].includes(b.status)) return 1;
+                return new Date(a.utcDate) - new Date(b.utcDate);
+            });
+
+            this.cachedMatches = processedMatches;
+            this.cacheTime = Date.now();
+
+            return processedMatches;
+
         } catch (error) {
-            console.error('Error fetching upcoming matches:', error);
-            throw error;
+            console.error('Error fetching matches:', {
+                message: error.message,
+                status: error.response?.status,
+                data: error.response?.data
+            });
+            
+            if (this.cachedMatches) {
+                console.log('Returning cached data due to error');
+                return this.cachedMatches;
+            }
+            return [];
         }
     }
 
-    formatMatchData(matches, isUpcoming = false) {
-        return matches.map(match => ({
-            id: match.id,
-            competition: match.competition.name,
-            homeTeam: {
-                name: match.homeTeam.name,
-                score: match.score.fullTime?.home || 0,
-                crest: match.homeTeam.crest
-            },
-            awayTeam: {
-                name: match.awayTeam.name,
-                score: match.score.fullTime?.away || 0,
-                crest: match.awayTeam.crest
-            },
-            status: match.status,
-            minute: match.minute || null,
-            lastUpdated: match.lastUpdated,
-            venue: match.venue,
-            matchday: match.matchday,
-            stage: match.stage,
-            group: match.group,
-            season: match.season.id,
-            utcDate: match.utcDate,
-            isUpcoming: isUpcoming
-        }));
+    async getPreviousMatches() {
+        try {
+            // Calculate date range for previous matches
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+
+            // Format dates for API
+            const dateFrom = sevenDaysAgo.toISOString().split('T')[0];
+            const dateTo = today.toISOString().split('T')[0];
+
+            console.log('Fetching previous matches with date range:', { dateFrom, dateTo });
+
+            // Single API call with combined filters
+            const response = await this.axiosInstance.get('/matches', {
+                params: {
+                    competitions: 'PD',
+                    dateFrom: dateFrom,
+                    dateTo: dateTo
+                }
+            });
+
+            console.log('API Response:', {
+                status: response.status,
+                matchCount: response.data?.matches?.length || 0
+            });
+
+            if (!response.data?.matches) {
+                console.log('No previous matches found');
+                return [];
+            }
+
+            // Filter and process only finished matches
+            const matches = response.data.matches.filter(match => match.status === 'FINISHED');
+            console.log(`Found ${matches.length} finished matches`);
+
+            return matches.map(match => {
+                const matchDate = new Date(match.utcDate);
+                return {
+                    id: match.id,
+                    competition: 'La Liga',
+                    homeTeam: {
+                        name: match.homeTeam?.name || '',
+                        score: match.score?.fullTime?.home || 0,
+                        crest: match.homeTeam?.crest || ''
+                    },
+                    awayTeam: {
+                        name: match.awayTeam?.name || '',
+                        score: match.score?.fullTime?.away || 0,
+                        crest: match.awayTeam?.crest || ''
+                    },
+                    status: 'FINISHED',
+                    venue: match.venue || '',
+                    formattedDate: matchDate.toLocaleDateString('en-GB', {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric'
+                    }),
+                    formattedTime: matchDate.toLocaleTimeString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }),
+                    utcDate: match.utcDate
+                };
+            });
+        } catch (error) {
+            console.error('Error fetching previous matches:', {
+                message: error.message,
+                status: error.response?.status,
+                data: error.response?.data
+            });
+            return [];
+        }
     }
 
     async getMatchDetails(matchId) {
         try {
             const response = await this.axiosInstance.get(`/matches/${matchId}`);
-            return this.formatMatchData([response.data])[0];
+            const match = response.data;
+            const matchDate = new Date(match.utcDate);
+            const isLive = ['LIVE', 'IN_PLAY', 'PAUSED'].includes(match.status);
+
+            return {
+                id: match.id,
+                competition: match.competition?.name || 'La Liga',
+                homeTeam: {
+                    name: match.homeTeam?.name || '',
+                    score: isLive ? (match.score?.fullTime?.home || 0) : null,
+                    crest: match.homeTeam?.crest || ''
+                },
+                awayTeam: {
+                    name: match.awayTeam?.name || '',
+                    score: isLive ? (match.score?.fullTime?.away || 0) : null,
+                    crest: match.awayTeam?.crest || ''
+                },
+                status: match.status,
+                minute: isLive ? (match.minute || null) : null,
+                venue: match.venue || '',
+                formattedDate: matchDate.toLocaleDateString('en-GB', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric'
+                }),
+                formattedTime: matchDate.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }),
+                utcDate: match.utcDate
+            };
         } catch (error) {
             console.error(`Error fetching match details for match ${matchId}:`, error);
             throw error;

@@ -14,32 +14,45 @@ import StatsBox from './components/StatsBox';
 import OnThisDay from './components/OnThisDay';
 import EditorsPicks from './components/EditorsPicks';
 import Footer from './components/Footer';
+import SignUp from './components/SignUp';
+import Login from './components/Login';
+import { AuthProvider } from './context/AuthContext';
+import LiveScores from './components/LiveScores';
 
 function App() {
   return (
-    <Router>
-      <div className="app">
-        <Navbar />
-        <LiveMatchTicker />
-        <div className="main-content">
-          <HeroBanner />
-          <div className="content-grid">
-            <div className="left-column">
-              <MatchCoverageTabs />
-              <TopStories />
-              <TrendingPlayers />
-              <EditorsPicks />
-            </div>
-            <div className="right-column">
-              <VideoCarousel />
-              <StatsBox />
-              <OnThisDay />
-            </div>
-          </div>
+    <AuthProvider>
+      <Router>
+        <div className="app">
+          <Navbar />
+          <Routes>
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/live-scores" element={<LiveScores />} />
+            <Route path="/" element={
+              <>
+                <LiveMatchTicker />
+                <div className="main-content">
+                  <HeroBanner />
+                  <div className="left-column">
+                    <MatchCoverageTabs />
+                    <TopStories />
+                    <TrendingPlayers />
+                    <EditorsPicks />
+                  </div>
+                  <div className="right-column">
+                    <VideoCarousel />
+                    <StatsBox />
+                    <OnThisDay />
+                  </div>
+                </div>
+              </>
+            } />
+          </Routes>
+          <Footer />
         </div>
-        <Footer />
-      </div>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 

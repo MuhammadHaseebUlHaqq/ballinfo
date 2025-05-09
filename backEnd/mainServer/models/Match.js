@@ -1,65 +1,71 @@
 import mongoose from 'mongoose';
 
 const matchSchema = new mongoose.Schema({
-    homeTeam: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Team',
-        required: true
-    },
-    awayTeam: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Team',
-        required: true
-    },
-    dateTime: {
-        type: Date,
-        required: true
-    },
-    venue: {
-        type: String,
-        required: true
-    },
     competition: {
         type: String,
         required: true
     },
+    date: {
+        type: Date,
+        required: true
+    },
     status: {
         type: String,
-        enum: ['upcoming', 'live', 'completed'],
-        default: 'upcoming'
+        required: true,
+        enum: ['SCHEDULED', 'LIVE', 'IN_PLAY', 'PAUSED', 'FINISHED', 'POSTPONED', 'CANCELLED']
+    },
+    minute: {
+        type: Number,
+        default: 0
+    },
+    homeTeam: {
+        name: {
+            type: String,
+            required: true
+        },
+        logo: {
+            type: String,
+            default: '/placeholder-team-logo.png'
+        }
+    },
+    awayTeam: {
+        name: {
+            type: String,
+            required: true
+        },
+        logo: {
+            type: String,
+            default: '/placeholder-team-logo.png'
+        }
     },
     score: {
-        homeScore: {
+        homeTeam: {
             type: Number,
             default: 0
         },
-        awayScore: {
+        awayTeam: {
             type: Number,
             default: 0
         }
     },
-    highlights: {
-        type: String
+    matchday: {
+        type: Number,
+        required: true
     },
-    events: [{
-        minute: Number,
-        type: {
-            type: String,
-            enum: ['goal', 'yellow-card', 'red-card', 'substitution', 'penalty']
-        },
-        team: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Team'
-        },
-        player: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Player'
-        },
-        description: String
-    }]
+    season: {
+        type: String,
+        required: true
+    }
 }, {
     timestamps: true
 });
+
+// Create a compound index for unique matches
+matchSchema.index({ 
+    'homeTeam.name': 1, 
+    'awayTeam.name': 1, 
+    'date': 1 
+}, { unique: true });
 
 const Match = mongoose.model('Match', matchSchema);
 

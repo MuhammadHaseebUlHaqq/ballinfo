@@ -8,11 +8,46 @@ class SocketService {
         this.activeConnections = new Set();
     }
 
-    initialize(server) {
+    initialize(server, corsOptions = {}) {
+        // Default CORS options
+        const defaultCorsOptions = {
+            origin: ['http://localhost:3001'],
+            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+            credentials: true,
+            allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+        };
+
+        // Merge with provided options
+        const finalCorsOptions = {
+            ...defaultCorsOptions,
+            ...corsOptions
+        };
+
         this.io = new Server(server, {
-            cors: {
-                origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-                methods: ['GET', 'POST']
+            cors: finalCorsOptions,
+            pingTimeout: 60000,
+            pingInterval: 25000,
+            transports: ['polling', 'websocket'],
+            allowEIO3: true,
+            maxHttpBufferSize: 1e8,
+            connectTimeout: 60000,
+            allowUpgrades: true,
+            upgradeTimeout: 45000,
+            cookie: {
+                name: 'ballinfo_socket',
+                httpOnly: true,
+                sameSite: 'lax'
+            },
+            allowRequest: (req, callback) => {
+                // Log connection attempt
+                console.log('Connection attempt:', {
+                    headers: req.headers,
+                    url: req.url,
+                    method: req.method,
+                    timestamp: new Date().toISOString()
+                });
+                
+                callback(null, true);
             }
         });
 
@@ -22,32 +57,154 @@ class SocketService {
 
     setupEventHandlers() {
         this.io.on('connection', (socket) => {
-            console.log('Client connected:', socket.id);
+            const clientInfo = {
+                id: socket.id,
+                transport: socket.conn.transport.name,
+                device: socket.handshake.query.device || 'unknown',
+                requestedTransport: socket.handshake.headers['x-requested-transport'] || 'any',
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log('Client connected:', clientInfo);
             this.activeConnections.add(socket.id);
 
-            // Send initial match data
-            this.sendLiveMatches(socket);
+            // For mobile clients, force polling
+            if (clientInfo.device === 'mobile') {
+                socket.conn.transport = socket.conn.transport || {};
+                socket.conn.transport.name = 'polling';
+                console.log('Forced polling transport for mobile client:', socket.id);
+            }
 
-            socket.on('disconnect', () => {
-                console.log('Client disconnected:', socket.id);
+            // Monitor connection health
+            let lastPingTime = Date.now();
+            let missedPings = 0;
+            
+            socket.conn.on('packet', (packet) => {
+                if (packet.type === 'ping') {
+                    lastPingTime = Date.now();
+                    missedPings = 0;
+                }
+            });
+
+            // More frequent health checks for mobile
+            const healthCheckInterval = clientInfo.device === 'mobile' ? 15000 : 30000;
+            const healthCheck = setInterval(() => {
+                const timeSinceLastPing = Date.now() - lastPingTime;
+                if (timeSinceLastPing > healthCheckInterval * 2) {
+                    missedPings++;
+                    console.warn('Connection health warning:', {
+                        clientId: socket.id,
+                        device: clientInfo.device,
+                        missedPings,
+                        lastPingTime: new Date(lastPingTime).toISOString()
+                    });
+
+                    if (missedPings >= 3) {
+                        console.error('Connection appears dead, forcing disconnect:', socket.id);
+                        socket.disconnect(true);
+                    } else {
+                        socket.emit('health_check');
+                    }
+                }
+            }, healthCheckInterval);
+
+            // Handle errors
+            socket.on('error', (error) => {
+                console.error('Socket error:', {
+                    clientId: socket.id,
+                    device: clientInfo.device,
+                    transport: socket.conn.transport.name,
+                    error: error.message || error
+                });
+
+                // For mobile clients, try to recover
+                if (clientInfo.device === 'mobile') {
+                    socket.conn.transport.name = 'polling';
+                }
+            });
+
+            // Clean up on disconnect
+            socket.on('disconnect', (reason) => {
+                console.log('Client disconnected:', {
+                    ...clientInfo,
+                    reason,
+                    duration: `${Math.round((Date.now() - new Date(clientInfo.timestamp).getTime()) / 1000)}s`
+                });
+                
                 this.activeConnections.delete(socket.id);
+                clearInterval(healthCheck);
+            });
+
+            // Handle live matches request with better error handling
+            socket.on('request_live_matches', async () => {
+                console.log('Live matches requested:', {
+                    clientId: socket.id,
+                    device: clientInfo.device,
+                    transport: socket.conn.transport.name
+                });
+
+                try {
+                    await this.sendLiveMatches(socket);
+                } catch (error) {
+                    console.error('Error sending live matches:', {
+                        clientId: socket.id,
+                        error: error.message
+                    });
+                    
+                    socket.emit('error', {
+                        type: 'REQUEST_ERROR',
+                        message: 'Failed to process live matches request',
+                        retry: true
+                    });
+                }
             });
 
             // Handle specific match subscription
-            socket.on('subscribe_match', (matchId) => {
+            socket.on('subscribe_match', async (matchId) => {
+                console.log('Match subscription requested:', matchId);
                 socket.join(`match_${matchId}`);
-                this.sendMatchDetails(matchId, socket);
+                try {
+                    await this.sendMatchDetails(matchId, socket);
+                } catch (error) {
+                    console.error('Error handling match subscription:', error);
+                    socket.emit('error', {
+                        type: 'SUBSCRIPTION_ERROR',
+                        message: 'Failed to process match subscription'
+                    });
+                }
             });
 
             socket.on('unsubscribe_match', (matchId) => {
                 socket.leave(`match_${matchId}`);
             });
+
+            // Send initial match data with error handling
+            this.sendLiveMatches(socket).catch(error => {
+                console.error('Error sending initial match data:', {
+                    clientId: socket.id,
+                    device: clientInfo.device,
+                    error: error.message
+                });
+                socket.emit('error', {
+                    type: 'INITIAL_DATA_ERROR',
+                    message: 'Failed to load initial match data',
+                    retry: true
+                });
+            });
+        });
+
+        // Handle server-side errors
+        this.io.on('error', (error) => {
+            console.error('Socket.IO server error:', error);
         });
     }
 
     async sendLiveMatches(socket = null) {
         try {
+            console.log('Fetching live matches...');
             const matches = await footballApiService.getLiveMatches();
+            console.log('Sending matches to client:', matches.length);
+            
             const target = socket || this.io;
             target.emit('live_matches', matches);
         } catch (error) {
@@ -55,13 +212,16 @@ class SocketService {
             const target = socket || this.io;
             target.emit('error', { 
                 type: 'LIVE_MATCHES_ERROR',
-                message: 'Unable to fetch live matches'
+                message: 'Unable to fetch live matches',
+                details: error.message
             });
+            throw error; // Re-throw to be caught by the caller
         }
     }
 
     async sendMatchDetails(matchId, socket = null) {
         try {
+            console.log('Fetching match details:', matchId);
             const match = await footballApiService.getMatchDetails(matchId);
             const target = socket || this.io.to(`match_${matchId}`);
             target.emit('match_details', match);
@@ -71,15 +231,22 @@ class SocketService {
             target.emit('error', {
                 type: 'MATCH_DETAILS_ERROR',
                 message: 'Unable to fetch match details',
-                matchId
+                matchId,
+                details: error.message
             });
+            throw error; // Re-throw to be caught by the caller
         }
     }
 
     startLiveUpdates() {
         setInterval(async () => {
             if (this.activeConnections.size > 0) {
-                await this.sendLiveMatches();
+                console.log('Sending periodic update to', this.activeConnections.size, 'clients');
+                try {
+                    await this.sendLiveMatches();
+                } catch (error) {
+                    console.error('Error in periodic update:', error);
+                }
             }
         }, this.updateInterval);
     }
