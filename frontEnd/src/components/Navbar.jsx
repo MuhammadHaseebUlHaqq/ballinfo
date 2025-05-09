@@ -14,6 +14,17 @@ import {
   faChevronDown 
 } from '@fortawesome/free-solid-svg-icons';
 import Logo from './Logo';
+import {
+    AppBar,
+    Toolbar,
+    Typography,
+    Button,
+    Box,
+    Container
+} from '@mui/material';
+import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
+import GroupsIcon from '@mui/icons-material/Groups';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
 
 const Navbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -53,69 +64,64 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className={`navbar ${isDarkMode ? 'dark' : ''}`}>
-      <div className="navbar-container">
-        <div className="navbar-left">
-          <Link to="/">
-            <Logo />
-          </Link>
-          <div className="search-container">
-            <input type="text" placeholder="Search teams, players, news..." />
-            <FontAwesomeIcon icon={faSearch} className="search-icon" />
-          </div>
-        </div>
+    <AppBar position="static">
+      <Container>
+        <Toolbar disableGutters>
+          <SportsSoccerIcon sx={{ mr: 1 }} />
+          <Typography
+            variant="h6"
+            noWrap
+            component={Link}
+            to="/"
+            sx={{
+              mr: 2,
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              letterSpacing: '.3rem',
+              color: 'inherit',
+              textDecoration: 'none',
+              flexGrow: 1
+            }}
+          >
+            BALLINFO
+          </Typography>
 
-        <button className="menu-toggle" onClick={toggleMenu}>
-          <FontAwesomeIcon icon={faBars} />
-        </button>
-
-        <div className={`navbar-links ${isMenuOpen ? 'active' : ''}`}>
-          <Link to="/live-scores">Live Scores</Link>
-          <Link to="/fixtures">Fixtures</Link>
-          <Link to="/teams">Teams</Link>
-          <Link to="/news">News</Link>
-          <Link to="/stats">Stats</Link>
-          <Link to="/laliga-2024-25">LaLiga 2024-25</Link>
-        </div>
-
-        <div className="navbar-actions">
-          <button className="icon-button" onClick={toggleTheme}>
-            <FontAwesomeIcon icon={isDarkMode ? faSun : faMoon} />
-          </button>
-          <button className="icon-button">
-            <FontAwesomeIcon icon={faBell} />
-          </button>
-          {user ? (
-            <div className="user-dropdown" ref={dropdownRef}>
-              <button 
-                className="user-dropdown-button" 
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              >
-                <FontAwesomeIcon icon={faUser} className="user-icon" />
-                <div className="user-info">
-                  <span className="username">{user.username}</span>
-                  <span className="favorite-team">{user.favoriteTeam}</span>
-                </div>
-                <FontAwesomeIcon icon={faChevronDown} className="dropdown-icon" />
-              </button>
-              {isDropdownOpen && (
-                <div className="dropdown-menu">
-                  <button onClick={handleLogout} className="dropdown-item">
-                    <FontAwesomeIcon icon={faSignOutAlt} />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link to="/login" className="auth-button">
-              <FontAwesomeIcon icon={faUser} />
-              <span>Login / Sign Up</span>
-            </Link>
-          )}
-        </div>
-      </div>
-    </nav>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              component={Link}
+              to="/"
+              color="inherit"
+              startIcon={<SportsSoccerIcon />}
+            >
+              Live Scores
+            </Button>
+            <Button
+              component={Link}
+              to="/teams"
+              color="inherit"
+              startIcon={<GroupsIcon />}
+            >
+              Teams
+            </Button>
+            <Button
+              component={Link}
+              to="/news"
+              color="inherit"
+              startIcon={<NewspaperIcon />}
+            >
+              News
+            </Button>
+            <Button
+              component={Link}
+              to="/test-match"
+              color="inherit"
+            >
+              Test Ticker
+            </Button>
+          </Box>
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 };
 

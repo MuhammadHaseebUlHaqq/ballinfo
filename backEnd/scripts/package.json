@@ -1,0 +1,16 @@
+{
+  "name": "ballinfo-news-scripts",
+  "version": "1.0.0",
+  "description": "Scripts for the LaLiga news module",
+  "type": "module",
+  "scripts": {
+    "test": "node testNewsApi.js",
+    "fetch-news": "node fetchNews.js",
+    "test-backend": "sh testNewsBackend.sh",
+    "test-backend-win": "testNewsBackend.bat"
+  },
+  "dependencies": {
+    "axios": "^1.8.0",
+    "dotenv": "^16.5.0"
+  }
+} 

@@ -65,6 +65,23 @@
   display: none;
 }
 
+/* Match link styling */
+.match-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.match-link:hover {
+  transform: translateY(-3px);
+}
+
+.match-link:focus-visible {
+  outline: 2px solid #f44336;
+  border-radius: 8px;
+}
+
 .match-card {
   min-width: 280px;
   background-color: #ffffff;
@@ -254,11 +271,11 @@
     width: 32px;
     height: 32px;
   }
-  
+
   .score {
     font-size: 1.125rem;
   }
-  
+
   .ticker-scroll {
     gap: 12px;
   }

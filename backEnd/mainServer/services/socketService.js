@@ -70,9 +70,11 @@ class SocketService {
 
             // For mobile clients, force polling
             if (clientInfo.device === 'mobile') {
-                socket.conn.transport = socket.conn.transport || {};
-                socket.conn.transport.name = 'polling';
-                console.log('Forced polling transport for mobile client:', socket.id);
+                // Don't try to modify the read-only transport.name property
+                console.log('Mobile client detected:', socket.id);
+                
+                // Instead of modifying transport.name directly, set a flag on the socket
+                socket.mobileClient = true;
             }
 
             // Monitor connection health
@@ -113,13 +115,14 @@ class SocketService {
                 console.error('Socket error:', {
                     clientId: socket.id,
                     device: clientInfo.device,
-                    transport: socket.conn.transport.name,
+                    transport: socket.conn && socket.conn.transport ? socket.conn.transport.name : 'unknown',
                     error: error.message || error
                 });
 
-                // For mobile clients, try to recover
+                // For mobile clients, mark the socket but don't modify transport properties
                 if (clientInfo.device === 'mobile') {
-                    socket.conn.transport.name = 'polling';
+                    socket.mobileClient = true;
+                    console.log('Mobile client error, marked for polling preference');
                 }
             });
 

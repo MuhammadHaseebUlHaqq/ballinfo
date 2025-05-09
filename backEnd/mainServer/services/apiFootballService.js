@@ -1,7 +1,7 @@
 import axios from 'axios';
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
 
-dotenv.config();
+config();
 
 class ApiFootballService {
     constructor() {

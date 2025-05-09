@@ -8,6 +8,8 @@ import socketService from './services/socketService.js';
 import playerStatsRouter from './routes/playerStats.js';
 import authRouter from './routes/auth.js';
 import matchesRouter from './routes/matches.js';
+import teamRoutes from './routes/teamRoutes.js';
+import newsRoutes from './routes/newsRoutes.js';
 import mongoose from 'mongoose';
 
 dotenv.config();
@@ -24,7 +26,7 @@ app.use((req, res, next) => {
 
 // CORS configuration
 const corsOptions = {
-    origin: ['http://localhost:3001'],
+    origin: ['http://localhost:3001', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token', 'Accept'],
     credentials: true
@@ -56,6 +58,8 @@ app.get('/api/health', (req, res) => {
 app.use('/api/matches', matchesRouter);
 app.use('/api/player-stats', playerStatsRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/teams', teamRoutes);
+app.use('/api/news', newsRoutes);
 
 // Handle 404 errors
 app.use((req, res, next) => {

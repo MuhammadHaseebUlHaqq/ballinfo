@@ -20,6 +20,11 @@ class FootballApiService {
         this.cachedMatches = null;
         this.cacheTime = 0;
         this.cacheValidityPeriod = 30000; // 30 seconds
+        this.cachedTeams = null;
+        this.teamsCache = {
+            data: null,
+            timestamp: 0
+        };
     }
 
     async getLiveMatches() {
@@ -241,6 +246,53 @@ class FootballApiService {
             };
         } catch (error) {
             console.error(`Error fetching match details for match ${matchId}:`, error);
+            throw error;
+        }
+    }
+
+    async getTeams() {
+        try {
+            console.log('Fetching La Liga teams...');
+            
+            if (!this.apiKey) {
+                throw new Error('API key is not configured');
+            }
+
+            // Check cache
+            if (this.teamsCache.data && 
+                Date.now() - this.teamsCache.timestamp < this.cacheValidityPeriod) {
+                console.log('Returning cached teams data');
+                return this.teamsCache.data;
+            }
+
+            const response = await this.axiosInstance.get('/competitions/PD/teams');
+
+            if (!response.data?.teams) {
+                console.log('No teams data in response');
+                return { teams: [] };
+            }
+
+            const teams = response.data.teams.map(team => ({
+                id: team.id,
+                name: team.name,
+                shortName: team.shortName,
+                tla: team.tla,
+                crest: team.crest,
+                address: team.address,
+                website: team.website,
+                founded: team.founded,
+                clubColors: team.clubColors,
+                venue: team.venue,
+                venueCapacity: team.venue?.capacity
+            }));
+
+            // Update cache
+            this.teamsCache.data = { teams };
+            this.teamsCache.timestamp = Date.now();
+
+            return this.teamsCache.data;
+        } catch (error) {
+            console.error('Error fetching teams:', error);
             throw error;
         }
     }

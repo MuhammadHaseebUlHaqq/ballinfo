@@ -10,24 +10,36 @@ const LiveMatchTicker = () => {
 
     useEffect(() => {
         // Connect to WebSocket and subscribe to live matches
-        socketService.connect();
-        
-        socketService.subscribe('live_matches', (data) => {
-            setMatches(data);
-            setLoading(false);
-        });
+        try {
+            socketService.connect();
+            
+            socketService.subscribe('live_matches', (data) => {
+                setMatches(data);
+                setLoading(false);
+            });
 
-        socketService.subscribe('error', (error) => {
-            setError(error.message);
-            setLoading(false);
-        });
+            socketService.subscribe('error', (error) => {
+                setError(error.message || "Connection error");
+                setLoading(false);
+            });
 
-        // Cleanup on unmount
-        return () => {
-            socketService.unsubscribe('live_matches');
-            socketService.unsubscribe('error');
-            socketService.disconnect();
-        };
+            // Cleanup on unmount
+            return () => {
+                try {
+                    console.log("Cleaning up socket connections");
+                    socketService.unsubscribe('live_matches');
+                    socketService.unsubscribe('error');
+                    socketService.disconnect();
+                } catch (error) {
+                    console.error("Error during socket cleanup:", error);
+                    // Continue with navigation even if socket cleanup fails
+                }
+            };
+        } catch (error) {
+            console.error("Socket setup error:", error);
+            setError("Unable to connect to live scores service");
+            setLoading(false);
+        }
     }, []);
 
     const formatMatchDateTime = (utcDate, minute) => {
@@ -81,15 +93,15 @@ const LiveMatchTicker = () => {
                     </div>
                     <div className="match-score">
                         <div style={{display: 'flex', alignItems: 'center', gap: 4}}>
-                            {isUpcoming ? (
-                                <span className="vs">VS</span>
-                            ) : (
-                                <>
-                                    <span className="score">{match.homeTeam.score}</span>
-                                    <span className="score-separator">-</span>
-                                    <span className="score">{match.awayTeam.score}</span>
-                                </>
-                            )}
+                        {isUpcoming ? (
+                            <span className="vs">VS</span>
+                        ) : (
+                            <>
+                                <span className="score">{match.homeTeam.score}</span>
+                                <span className="score-separator">-</span>
+                                <span className="score">{match.awayTeam.score}</span>
+                            </>
+                        )}
                         </div>
                         <div className="match-date-time">
                             <span className="match-date">{dateTime.date}</span>

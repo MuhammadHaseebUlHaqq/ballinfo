@@ -3,51 +3,64 @@ import mongoose from 'mongoose';
 const teamSchema = new mongoose.Schema({
     name: {
         type: String,
+        required: true
+    },
+    shortName: {
+        type: String,
+        required: true
+    },
+    tla: {
+        type: String,
         required: true,
-        trim: true
+        maxLength: 3
     },
-    logo: {
+    crest: {
         type: String,
         required: true
     },
-    country: {
+    founded: {
+        type: Number,
+        required: true
+    },
+    venue: {
         type: String,
         required: true
     },
-    league: {
+    website: {
         type: String,
         required: true
     },
-    players: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Player'
-    }],
-    stats: {
-        wins: {
-            type: Number,
-            default: 0
+    clubColors: {
+        type: String,
+        required: true
+    },
+    coach: {
+        name: {
+            type: String,
+            required: true
         },
-        draws: {
-            type: Number,
-            default: 0
-        },
-        losses: {
-            type: Number,
-            default: 0
-        },
-        goalsFor: {
-            type: Number,
-            default: 0
-        },
-        goalsAgainst: {
-            type: Number,
-            default: 0
+        nationality: {
+            type: String,
+            required: true
         }
-    }
-}, {
-    timestamps: true
+    },
+    squad: [{
+        name: {
+            type: String,
+            required: true
+        },
+        position: {
+            type: String,
+            required: true
+        },
+        nationality: {
+            type: String,
+            required: true
+        },
+        shirtNumber: {
+            type: Number
+        }
+    }]
 });
 
-const Team = mongoose.model('Team', teamSchema);
-
-export default Team; 
+export default mongoose.model('Team', teamSchema); 

@@ -1,0 +1,135 @@
+.related-news {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.related-news-title {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.related-news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.related-news-item {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.related-news-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.related-news-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.related-news-image {
+  height: 160px;
+  overflow: hidden;
+  position: relative;
+}
+
+.related-news-image-loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #f8f8f8;
+}
+
+.related-news-image-loading {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #1976d2;
+  animation: related-news-spin 1s linear infinite;
+}
+
+@keyframes related-news-spin {
+  to { transform: rotate(360deg); }
+}
+
+.related-news-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.related-news-item:hover .related-news-image img {
+  transform: scale(1.05);
+}
+
+.related-news-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  color: #999;
+  font-weight: 600;
+}
+
+.related-news-content {
+  padding: 1rem;
+  background-color: #fff;
+}
+
+.related-news-article-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: #333;
+}
+
+.related-news-meta {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.related-news-date {
+  margin-right: auto;
+}
+
+.related-news-loading {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .related-news-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .related-news-image {
+    height: 180px;
+  }
+} 
